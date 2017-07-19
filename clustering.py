@@ -6,12 +6,11 @@ import pandas as pd
 import seaborn as sns
 
 def main():
-  k = 4
+  k = 3
   conjunto_puntos = generateRandomData()
   vectors = tf.constant(conjunto_puntos)  # N,2
   centroides = getKrandomCentroids(k, vectors)  # 4,2
   # print(vectors.get_shape())
-  # print(centroides.get_shape())
 
   #tf.expand_dims inserts a dimension into a tensor in the one given in the argument
   #The aim is to extend both tensors from 2 dimensions to 3 dimensions to make the sizes match in order to perform a subtraction later
@@ -22,12 +21,12 @@ def main():
   #Squared Euclidean Distance
   distance = tf.reduce_sum(tf.square(tf.subtract(expanded_vectors, expanded_centroides)), 2)  # 4,N
   assignments = tf.argmin(distance, 0)  # N
-  print(assignments)
 
-  means = tf.concat([tf.reduce_mean(tf.gather(vectors, tf.reshape(tf.where(tf.equal(assignments, c)),[1,-1])), reduction_indices=[1]) for c in range(k)], 0) #???
+  means = tf.concat([tf.reduce_mean(tf.gather(vectors, tf.reshape(tf.where(tf.equal(assignments, c)),[1,-1])), reduction_indices=[1]) for c in range(k)], 0) # 4 2
 
-  update_centroides = tf.assign(centroides, means)
+  update_centroides = tf.assign(centroides, means) # 4 2; update centroids
   init_op = tf.initialize_all_variables()
+
   sess = tf.Session()
   sess.run(init_op)
 
