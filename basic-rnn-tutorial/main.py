@@ -2,7 +2,7 @@ import random
 import numpy as np
 import tensorflow as tf
 from itertools import islice
-import time
+import click
 
 batch_size = 100
 num_classes = 2
@@ -60,25 +60,50 @@ loss = tf.contrib.seq2seq.sequence_loss(
 )
 # print(loss)
 cost = tf.reduce_mean(loss)
-
 optimizer = tf.train.AdamOptimizer().minimize(cost)
-
 tvars = tf.trainable_variables()
+saver = tf.train.Saver()
 
-with tf.Session() as sess:
-  sess.run(tf.global_variables_initializer())
+@click.group()
+def cli():
+  pass
 
-  for epoch in range(training_samples_size):
-    epoch_loss = 0
+@click.command()
+def train():
+  with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+
+    for training_step in range(training_samples_size):
+      training_step_loss = 0
+      x_data, y_data = generate_data(batch_size, vocabolary)
+
+      res = sess.run([embedding_layer, optimizer, loss, cost, tvars], feed_dict={x: x_data, y: y_data})
+
+      if training_step % 100 == 0:
+        training_step_loss += res[3]
+        checkpoint = saver.save(sess, './training_model', global_step=training_step)
+        print(f'training_step: {training_step} completed out of {training_samples_size} with loss {training_step_loss}')
+
+
+@click.command()
+def test():
+  with tf.Session() as sess:
+    checkpoint = tf.train.latest_checkpoint('./')
+    saver.restore(sess, checkpoint)
     x_data, y_data = generate_data(batch_size, vocabolary)
+    for _ in range(5):
+      test_loss = sess.run([loss, cost], feed_dict={x: x_data, y: y_data})
+      print(f'loss cost: {test_loss[1]}')
 
-    res = sess.run([embedding_layer, optimizer, loss, cost, tvars], feed_dict={x: x_data, y: y_data})
+cli.add_command(train)
+cli.add_command(test)
 
-    epoch_loss += res[3]
-    print(f'{time.time()} epoch: {epoch} completed out of {training_samples_size} with loss {epoch_loss}')
+if __name__ == '__main__':
+  cli()
 
-    for var in tvars:
-      print(var.name)
+
+    # for var in tvars:
+    #   print(var.name)
 
   # print(a.shape)
   # print(embeddings)
