@@ -4,13 +4,13 @@ class DatasetProcessor():
 
   def __init__(self):
     lsSentences = self.listOfSentences();
-    self.vocab = self.createVocabolary(lsSentences)
-    lsSentences = self.applyVocab(lsSentences, self.vocab)
+    self.vocab_word, self.vocab_tag = self.createVocabolary(lsSentences)
+    lsSentences = self.applyVocab(lsSentences)
 
     max_len = self.findMaxLen(lsSentences)
     self.balanceLsSentences = [self.addEndOfSequenze(max_len, sentece) for sentece in  lsSentences]
 
-  def applyVocab(self, ls, vocab):
+  def applyVocab(self, ls):
     print('applyVocab')
     outputls = []
     for sentence in ls:
@@ -20,31 +20,34 @@ class DatasetProcessor():
         if len(w) > 2 or len(w) <= 1:
           continue
         word, tag = w
-        trans_wt = f'{vocab[word]}/{vocab[tag]}'
+        trans_wt = f'{self.vocab_word[word]}/{self.vocab_tag[tag]}'
         trans_s.append(trans_wt)
       outputls.append(trans_s)
     return outputls
 
   def createVocabolary(self, ls):
     print("createVocabolary")
-    vocab = dict()
-    count = 0
+    vocab_w = dict()
+    vocab_t = dict()
+
+    count_w = 0
+    count_t = 0
     for sentence in ls:
       for wordtag in sentence:
         w = wordtag.split('/')
         if len(w) > 2 or len(w) <= 1:
           continue
         word, tag = w
-        if word not in vocab:
-          vocab[word] = count
-          count += 1
-        if tag not in vocab:
-          vocab[tag] = count
-          count += 1
+        if word not in vocab_w:
+          vocab_w[word] = count_w
+          count_w += 1
+        if tag not in vocab_t:
+          vocab_t[tag] = count_t
+          count_t += 1
 
-    vocab['.'] = count + 1
-    vocab['EOS'] = count + 2
-    return vocab
+    vocab_w['.'] = count_w
+    vocab_t['EOS'] = count_t
+    return vocab_w, vocab_t
 
   def listOfSentences(self):
     print('listOfSentences')
@@ -68,7 +71,7 @@ class DatasetProcessor():
 
   def addEndOfSequenze(self, max_len, ls):
     diff = max_len - len(ls)
-    ls += [f'{self.vocab["."]}/{self.vocab["EOS"]}']*diff
+    ls += [f'{self.vocab_word["."]}/{self.vocab_tag["EOS"]}']*diff
     return ls
 
   def getTestTrainDataset(self, ls):
