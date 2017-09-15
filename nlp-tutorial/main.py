@@ -113,10 +113,10 @@ with tf.Session() as sess:
       x_data, y_data  = getBatchData(counterTrain, batch_size)
       counterTrain += 1
 
-      res = sess.run([embedding_layer, optimizer, loss, cost, tvars], feed_dict={x: x_data, y: y_data})
+      res = sess.run([embedding_layer, optimizer, loss, cost, tvars, accuracy], feed_dict={x: x_data, y: y_data})
 
     training_step_loss += res[3]
-    print(f'training_step: {training_step}*10 completed out of {TRAINING_STEPS}*{training_samples_size} with loss {training_step_loss}')
+    print(f'training_step: {training_step}*10 completed out of {TRAINING_STEPS}*{training_samples_size} with loss {training_step_loss} with prediction={res[5]}')
 
     #test
     while counterTest < test_samples_size:
