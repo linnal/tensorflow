@@ -33,8 +33,8 @@ counterTest=0
 def getTestBatchData(counterTrain, batch_size):
   start = counterTrain*batch_size
   end = start + batch_size
-  x_test_data = x_train[start:end]
-  y_test_data = y_train[start:end]
+  x_test_data = x_test[start:end]
+  y_test_data = y_test[start:end]
 
   return np.array(x_test_data), np.array(y_test_data) #100x256
 
