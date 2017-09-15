@@ -17,15 +17,26 @@ hidden_size = 200
 vocab_input_size = len(dp.vocab_word.keys())
 vocab_ouput = len(dp.vocab_tag.keys())
 training_samples_size = len(x_train) // batch_size
+test_samples_size = len(x_test) // batch_size
 TRAINING_STEPS = 6
 
-counter=0
-def getBatchData(counter, batch_size):
-  start = counter*batch_size
+counterTrain=0
+def getBatchData(counterTrain, batch_size):
+  start = counterTrain*batch_size
   end = start + batch_size
   x_data = x_train[start:end]
   y_data = y_train[start:end]
+
   return np.array(x_data), np.array(y_data) #100x256
+
+counterTest=0
+def getTestBatchData(counterTrain, batch_size):
+  start = counterTrain*batch_size
+  end = start + batch_size
+  x_test_data = x_train[start:end]
+  y_test_data = y_train[start:end]
+
+  return np.array(x_test_data), np.array(y_test_data) #100x256
 
 
 
@@ -75,17 +86,25 @@ with tf.Session() as sess:
   sess.run(tf.global_variables_initializer())
 
   for training_step in range(TRAINING_STEPS):
-    while counter < training_samples_size:
+    while counterTrain < training_samples_size:
       training_step_loss = 0
-      x_data, y_data = getBatchData(counter, batch_size)
-      counter += 1
+      x_data, y_data  = getBatchData(counterTrain, batch_size)
+      counterTrain += 1
 
       res = sess.run([embedding_layer, optimizer, loss, cost, tvars], feed_dict={x: x_data, y: y_data})
 
     training_step_loss += res[3]
-    # checkpoint = saver.save(sess, './training_model', global_step=training_step)
-    print(f'training_step: {training_step} completed out of {TRAINING_STEPS}*{training_samples_size} with loss {training_step_loss}')
+    print(f'training_step: {training_step}*10 completed out of {TRAINING_STEPS}*{training_samples_size} with loss {training_step_loss}')
 
-    counter = 0
+    #test
+    while counterTest < test_samples_size:
+      x_test_data, y_test_data = getTestBatchData(counterTest, batch_size)
+      test_loss = sess.run([loss, cost], feed_dict={x: x_test_data, y: y_test_data})
+      print(f'testing_step {counterTest} out of {test_samples_size} with loss cost: {test_loss[1]}')
+      counterTest += 1
+
+    counterTrain = 0
+    counterTest = 0
     x_train, y_train, x_test, y_test = dp.perpareDataset()
+
 
