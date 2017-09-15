@@ -100,7 +100,7 @@ optimizer = tf.train.AdamOptimizer().minimize(cost)
 tvars = tf.trainable_variables()
 
 predictions = tf.argmax(logits, -1)
-acc = tf.contrib.metrics.accuracy(predictions,y)
+accuracy = tf.contrib.metrics.accuracy(predictions,y)
 
 #train
 with tf.Session() as sess:
@@ -121,7 +121,7 @@ with tf.Session() as sess:
     #test
     while counterTest < test_samples_size:
       x_test_data, y_test_data = getTestBatchData(counterTest, batch_size)
-      test_loss = sess.run([loss, cost, predictions, acc], feed_dict={x: x_test_data, y: y_test_data})
+      test_loss = sess.run([loss, cost, predictions, accuracy], feed_dict={x: x_test_data, y: y_test_data})
 
       print(f'testing_step {counterTest} out of {test_samples_size} with loss cost: {test_loss[1]} with prediction={test_loss[3]}')
       counterTest += 1
