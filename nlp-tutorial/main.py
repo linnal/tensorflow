@@ -5,10 +5,7 @@ import tensorflow as tf
 
 dp = DatasetProcessor()
 x_train, y_train, x_test, y_test = dp.perpareDataset()
-print(f'xtrain {len(x_train)}, {len(x_train[0])}, ytrain {len(x_test)}, {len(x_test[0])}')
-print(f'vocab_word={len(dp.vocab_word.keys())}, vocab_tag={len(dp.vocab_tag.keys())}')
 # print([len(x) for x in xtrain])
-print("="*30)
 
 batch_size = 100
 timestep = 265
@@ -16,9 +13,34 @@ emb_dim = 128
 hidden_size = 200
 vocab_input_size = len(dp.vocab_word.keys())
 vocab_ouput = len(dp.vocab_tag.keys())
+TRAINING_STEPS = 6
+
+
+def fillMissingData():
+  global x_train, y_train, x_test, y_test
+
+  train_extra = len(x_train)%batch_size
+  if train_extra > 0:
+    extra_xtrain, extra_ytrain = dp.getExtraTrainData(batch_size - train_extra)
+  test_extra = len(x_test)%batch_size
+  if test_extra > 0:
+    extra_xtest, extra_ytest = dp.getExtraTestData(batch_size - test_extra)
+
+  x_train += extra_xtrain
+  y_train += extra_ytrain
+  x_test += extra_xtest
+  y_test += extra_ytest
+
+
+fillMissingData()
+
+
 training_samples_size = len(x_train) // batch_size
 test_samples_size = len(x_test) // batch_size
-TRAINING_STEPS = 6
+
+print(f'xtrain {len(x_train)}, {len(x_train[0])}, ytrain {len(x_test)}, {len(x_test[0])}')
+print(f'vocab_word={len(dp.vocab_word.keys())}, vocab_tag={len(dp.vocab_tag.keys())}')
+print("="*30)
 
 counterTrain=0
 def getBatchData(counterTrain, batch_size):
@@ -42,8 +64,8 @@ def getTestBatchData(counterTrain, batch_size):
 
 
 
-x = tf.placeholder(tf.int32, [batch_size, timestep]) #100x256
-y = tf.placeholder(tf.int32, [batch_size, timestep]) #100x256
+x = tf.placeholder(tf.int64, [batch_size, timestep]) #100x256
+y = tf.placeholder(tf.int64, [batch_size, timestep]) #100x256
 
 embeddings = tf.get_variable("embedding", [vocab_input_size, emb_dim]) #6428x128
 embedding_layer = tf.nn.embedding_lookup(embeddings, x)
@@ -76,14 +98,14 @@ loss = tf.contrib.seq2seq.sequence_loss(
 cost = tf.reduce_mean(loss)
 optimizer = tf.train.AdamOptimizer().minimize(cost)
 tvars = tf.trainable_variables()
-saver = tf.train.Saver()
 
-
-
+predictions = tf.argmax(logits, -1)
+acc = tf.contrib.metrics.accuracy(predictions,y)
 
 #train
 with tf.Session() as sess:
   sess.run(tf.global_variables_initializer())
+  # print(logits.shape)
 
   for training_step in range(TRAINING_STEPS):
     while counterTrain < training_samples_size:
@@ -99,12 +121,12 @@ with tf.Session() as sess:
     #test
     while counterTest < test_samples_size:
       x_test_data, y_test_data = getTestBatchData(counterTest, batch_size)
-      test_loss = sess.run([loss, cost], feed_dict={x: x_test_data, y: y_test_data})
-      print(f'testing_step {counterTest} out of {test_samples_size} with loss cost: {test_loss[1]}')
+      test_loss = sess.run([loss, cost, predictions, acc], feed_dict={x: x_test_data, y: y_test_data})
+
+      print(f'testing_step {counterTest} out of {test_samples_size} with loss cost: {test_loss[1]} with prediction={test_loss[3]}')
       counterTest += 1
 
     counterTrain = 0
     counterTest = 0
     x_train, y_train, x_test, y_test = dp.perpareDataset()
-
-
+    fillMissingData()

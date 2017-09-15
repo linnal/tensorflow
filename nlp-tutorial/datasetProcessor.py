@@ -102,13 +102,28 @@ class DatasetProcessor():
 
     return output_words_list, output_tags_list
 
-  def perpareDataset(self):
+  def perpareDataset(self, dim=None):
     print('perpareDataset')
     train, test = self.getTestTrainDataset(self.balanceLsSentences)
 
     train_words, train_tags = self.separateWordsFromTags(train)
     test_words, test_tags = self.separateWordsFromTags(test)
 
+    if(dim != None):
+      train_words = train_words[:dim]
+      train_tags = train_tags[:dim]
+      test_words = test_words[:dim]
+      test_tags = test_tags[:dim]
+
     return train_words, train_tags, test_words, test_tags
 
 
+  def getExtraTrainData(self, dim):
+    shuffle(self.balanceLsSentences)
+    extra = self.balanceLsSentences[:dim]
+    return self.separateWordsFromTags(extra)
+
+  def getExtraTestData(self, dim):
+    shuffle(self.balanceLsSentences)
+    extra = self.balanceLsSentences[:dim]
+    return self.separateWordsFromTags(extra)
