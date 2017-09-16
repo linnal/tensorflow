@@ -13,7 +13,7 @@ emb_dim = 128
 hidden_size = 200
 vocab_input_size = len(dp.vocab_word.keys())
 vocab_ouput = len(dp.vocab_tag.keys())
-TRAINING_STEPS = 6
+TRAINING_STEPS = 2
 
 
 def fillMissingData():
@@ -102,6 +102,10 @@ tvars = tf.trainable_variables()
 predictions = tf.argmax(logits, -1)
 accuracy = tf.contrib.metrics.accuracy(predictions,y)
 
+first_sentence_pred = tf.gather(predictions, 0)
+first_sentence_tag = tf.gather(y, 0)
+first_sentence_word = tf.gather(x, 0)
+
 #train
 with tf.Session() as sess:
   sess.run(tf.global_variables_initializer())
@@ -113,18 +117,44 @@ with tf.Session() as sess:
       x_data, y_data  = getBatchData(counterTrain, batch_size)
       counterTrain += 1
 
-      res = sess.run([embedding_layer, optimizer, loss, cost, tvars, accuracy], feed_dict={x: x_data, y: y_data})
+      res = sess.run([embedding_layer,
+                      optimizer,
+                      loss,
+                      cost,
+                      tvars,
+                      accuracy,
+                      first_sentence_word,
+                      first_sentence_tag,
+                      first_sentence_pred],
+                      feed_dict={x: x_data, y: y_data})
 
     training_step_loss += res[3]
-    print(f'training_step: {training_step}*10 completed out of {TRAINING_STEPS}*{training_samples_size} with loss {training_step_loss} with prediction={res[5]}')
+    print('='*30 + 'TRAINING' + '='*30)
+    print(f'training_step: {training_step}*10 completed out of {TRAINING_STEPS}*{training_samples_size} with loss {training_step_loss} with accuracy={res[5]}')
+    print( [x for x in list(zip(dp.translate(res[6], 'word'), dp.translate(res[7]), dp.translate(res[8])))] )
+
 
     #test
     while counterTest < test_samples_size:
       x_test_data, y_test_data = getTestBatchData(counterTest, batch_size)
-      test_loss = sess.run([loss, cost, predictions, accuracy], feed_dict={x: x_test_data, y: y_test_data})
+      res = sess.run([loss,
+                      cost,
+                      predictions,
+                      accuracy,
+                      first_sentence_word,
+                      first_sentence_tag,
+                      first_sentence_pred],
+                      feed_dict={x: x_test_data, y: y_test_data})
 
-      print(f'testing_step {counterTest} out of {test_samples_size} with loss cost: {test_loss[1]} with prediction={test_loss[3]}')
+      print('='*30 + 'TEST' + '='*30)
+      print(f'testing_step {counterTest} out of {test_samples_size} with loss cost: {res[1]} with accuracy={res[3]}')
+      print( [x for x in list(zip(dp.translate(res[4], 'word'), dp.translate(res[5]), dp.translate(res[6])))] )
+
       counterTest += 1
+
+      # stamp one of the array with its tag version and its predicted version
+      # x/y/logits
+
 
     counterTrain = 0
     counterTest = 0

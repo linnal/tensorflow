@@ -4,7 +4,7 @@ class DatasetProcessor():
 
   def __init__(self):
     lsSentences = self.listOfSentences();
-    self.vocab_word, self.vocab_tag = self.createVocabolary(lsSentences)
+    self.vocab_word, self.vocab_tag, self.vocab_word_id, self.vocab_tag_id = self.createVocabolary(lsSentences)
     lsSentences = self.applyVocab(lsSentences)
 
     max_len = self.findMaxLen(lsSentences)
@@ -29,6 +29,8 @@ class DatasetProcessor():
     print("createVocabolary")
     vocab_w = dict()
     vocab_t = dict()
+    vocab_w_id = dict()
+    vocab_t_id = dict()
 
     count_w = 0
     count_t = 0
@@ -40,14 +42,19 @@ class DatasetProcessor():
         word, tag = w
         if word not in vocab_w:
           vocab_w[word] = count_w
+          vocab_w_id[count_w] = word
           count_w += 1
         if tag not in vocab_t:
           vocab_t[tag] = count_t
+          vocab_t_id[count_t] = tag
           count_t += 1
 
     vocab_w['.'] = count_w
+    vocab_w_id[count_w] = '.'
     vocab_t['EOS'] = count_t
-    return vocab_w, vocab_t
+    vocab_t_id[count_t] = 'EOS'
+
+    return vocab_w, vocab_t, vocab_w_id, vocab_t_id
 
   def listOfSentences(self):
     print('listOfSentences')
@@ -127,3 +134,10 @@ class DatasetProcessor():
     shuffle(self.balanceLsSentences)
     extra = self.balanceLsSentences[:dim]
     return self.separateWordsFromTags(extra)
+
+
+  def translate(self, ls, _type="tag"):
+    if _type == 'word':
+      return [self.vocab_word_id[x] for x in ls]
+
+    return [self.vocab_tag_id[x] for x in ls]
