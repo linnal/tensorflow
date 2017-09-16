@@ -13,7 +13,7 @@ emb_dim = 128
 hidden_size = 200
 vocab_input_size = len(dp.vocab_word.keys())
 vocab_ouput = len(dp.vocab_tag.keys())
-TRAINING_STEPS = 2
+TRAINING_STEPS = 6
 
 
 def fillMissingData():
