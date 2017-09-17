@@ -61,13 +61,14 @@ class DatasetProcessor():
     output_word_tag_list= []
 
     with open("corpus.small") as f:
-      for paragraph in f:
-        paragraph = paragraph.split("./.")
-        for line in paragraph:
-          ls_line = line.split()
-          if(len(ls_line) == 0):
-            continue
-          output_word_tag_list.append(ls_line)
+      lines = [p for p in f]
+      txt = ' '.join(lines)
+      sentence = txt.split('./.')
+      for s in sentence:
+        ls_line = s.split()
+        if(len(ls_line) == 0):
+          continue
+        output_word_tag_list.append(ls_line)
     return output_word_tag_list
 
 
@@ -78,6 +79,8 @@ class DatasetProcessor():
 
   def addEndOfSequenze(self, max_len, ls):
     diff = max_len - len(ls)
+    # if diff == 0:
+    #   print ([ ( self.vocab_word_id[int(x[0])], self.vocab_tag_id[int(x[1])]) for x in [x.split("/") for x in ls] ])
     ls += [f'{self.vocab_word["."]}/{self.vocab_tag["EOS"]}']*diff
     return ls
 
@@ -109,18 +112,12 @@ class DatasetProcessor():
 
     return output_words_list, output_tags_list
 
-  def perpareDataset(self, dim=None):
+  def perpareDataset(self):
     print('perpareDataset')
     train, test = self.getTestTrainDataset(self.balanceLsSentences)
 
     train_words, train_tags = self.separateWordsFromTags(train)
     test_words, test_tags = self.separateWordsFromTags(test)
-
-    if(dim != None):
-      train_words = train_words[:dim]
-      train_tags = train_tags[:dim]
-      test_words = test_words[:dim]
-      test_tags = test_tags[:dim]
 
     return train_words, train_tags, test_words, test_tags
 
@@ -141,3 +138,4 @@ class DatasetProcessor():
       return [self.vocab_word_id[x] for x in ls]
 
     return [self.vocab_tag_id[x] for x in ls]
+

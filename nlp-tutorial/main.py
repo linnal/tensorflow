@@ -8,12 +8,11 @@ x_train, y_train, x_test, y_test = dp.perpareDataset()
 # print([len(x) for x in xtrain])
 
 batch_size = 100
-timestep = 265
-emb_dim = 128
+emb_dim = 50
 hidden_size = 200
 vocab_input_size = len(dp.vocab_word.keys())
 vocab_ouput = len(dp.vocab_tag.keys())
-TRAINING_STEPS = 6
+TRAINING_STEPS = 10
 
 
 def fillMissingData():
@@ -34,6 +33,7 @@ def fillMissingData():
 
 fillMissingData()
 
+timestep = len(x_train[0])
 
 training_samples_size = len(x_train) // batch_size
 test_samples_size = len(x_test) // batch_size
@@ -73,7 +73,6 @@ embedding_layer = tf.nn.embedding_lookup(embeddings, x)
 cell = tf.contrib.rnn.BasicLSTMCell(hidden_size, forget_bias=0.0, state_is_tuple=True)
 outputs = []
 state = cell.zero_state(batch_size, tf.float32)
-
 with tf.variable_scope("RNN"):
   for i in range(timestep):
     (cell_output, state) = cell(embedding_layer[:, i, :], state)
@@ -106,12 +105,15 @@ first_sentence_pred = tf.gather(predictions, 0)
 first_sentence_tag = tf.gather(y, 0)
 first_sentence_word = tf.gather(x, 0)
 
+
 #train
 with tf.Session() as sess:
+  print("global_variables_initializer")
   sess.run(tf.global_variables_initializer())
   # print(logits.shape)
 
   for training_step in range(TRAINING_STEPS):
+
     while counterTrain < training_samples_size:
       training_step_loss = 0
       x_data, y_data  = getBatchData(counterTrain, batch_size)
