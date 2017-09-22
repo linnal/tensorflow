@@ -1,14 +1,14 @@
 from datasetProcessor import DatasetProcessor
 import numpy as np
 import tensorflow as tf
-
+import sys
 
 dp = DatasetProcessor()
 x_train, y_train, x_test, y_test = dp.perpareDataset()
 # print([len(x) for x in xtrain])
 
 batch_size = 100
-emb_dim = 50
+emb_dim = 51
 hidden_size = 200
 vocab_input_size = len(dp.vocab_word.keys())
 vocab_ouput = len(dp.vocab_tag.keys())
@@ -92,7 +92,8 @@ def calculateAccuracy(prediction, gold):
     accDenom += len(truncatedLs)
   return accNum/accDenom
 
-
+def _build_inner_cell():
+  return tf.contrib.rnn.BasicLSTMCell(hidden_size, forget_bias=0.0, state_is_tuple=True)
 
 x = tf.placeholder(tf.int64, [batch_size, timestep]) #100x256
 y = tf.placeholder(tf.int64, [batch_size, timestep]) #100x256
@@ -101,7 +102,9 @@ weight = tf.placeholder(tf.float32, [batch_size, timestep]) #100x256
 embeddings = tf.get_variable("embedding", [vocab_input_size, emb_dim]) #6428x128
 embedding_layer = tf.nn.embedding_lookup(embeddings, x)
 
-cell = tf.contrib.rnn.BasicLSTMCell(hidden_size, forget_bias=0.0, state_is_tuple=True)
+NUM_LAYERS = int(sys.argv[1])
+cell = tf.contrib.rnn.MultiRNNCell(cells=[_build_inner_cell() for _ in range(0, NUM_LAYERS)], state_is_tuple=True)
+
 outputs = []
 state = cell.zero_state(batch_size, tf.float32)
 with tf.variable_scope("RNN"):
