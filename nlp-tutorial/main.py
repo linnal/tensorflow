@@ -12,7 +12,7 @@ emb_dim = 50
 hidden_size = 200
 vocab_input_size = len(dp.vocab_word.keys())
 vocab_ouput = len(dp.vocab_tag.keys())
-TRAINING_STEPS = 10
+TRAINING_STEPS = 100
 
 
 def fillMissingData():
@@ -122,11 +122,10 @@ loss = tf.contrib.seq2seq.sequence_loss(
     y,
     weight,
     average_across_timesteps=True,
-    average_across_batch=False
+    average_across_batch=True
 )
 
-cost = tf.reduce_mean(loss)
-optimizer = tf.train.AdamOptimizer().minimize(cost)
+optimizer = tf.train.AdamOptimizer().minimize(loss)
 tvars = tf.trainable_variables()
 
 predictions = tf.argmax(logits, -1)
@@ -152,36 +151,34 @@ with tf.Session() as sess:
       res = sess.run([embedding_layer, #0
                       optimizer, #1
                       loss, #2
-                      cost, #3
-                      tvars, #4
-                      first_sentence_word, #5
-                      first_sentence_tag, #6
-                      first_sentence_pred, #7
-                      predictions], #8
+                      tvars, #3
+                      first_sentence_word, #4
+                      first_sentence_tag, #5
+                      first_sentence_pred, #6
+                      predictions], #7
                       feed_dict={x: np.array(x_data), y: np.array(y_data), weight: createWeightMask(y_data)})
 
-    training_step_loss += res[3]
-    accuracy =  calculateAccuracy(res[8], y_data)
+    training_step_loss += res[2]
+    accuracy =  calculateAccuracy(res[7], y_data)
 
     print('='*30 + 'TRAINING' + '='*30)
     print(f'training_step: {training_step}*10 completed out of {TRAINING_STEPS}*{training_samples_size} with loss {training_step_loss} with accuracy={accuracy}')
-    print( [x for x in list(zip(dp.translate(res[5], 'word'), dp.translate(res[6]), dp.translate(res[7])))] )
+    print( [x for x in list(zip(dp.translate(res[4], 'word'), dp.translate(res[5]), dp.translate(res[6])))] )
 
     #test
     while counterTest < test_samples_size:
       x_test_data, y_test_data = getTestBatchData( counterTest,  batch_size)
       res = sess.run([loss, #0
-                      cost, #1
-                      predictions, #2
-                      first_sentence_word, #3
-                      first_sentence_tag, #4
-                      first_sentence_pred], #5
+                      predictions, #1
+                      first_sentence_word, #2
+                      first_sentence_tag, #3
+                      first_sentence_pred], #4
                       feed_dict={x: np.array(x_test_data), y: np.array(y_test_data), weight: createWeightMask(y_data)})
-      print('*'*30)
-      accuracy =  calculateAccuracy(res[2], y_test_data)
+
+      accuracy =  calculateAccuracy(res[1], y_test_data)
       print('='*30 + 'TEST' + '='*30)
-      print(f'testing_step {counterTest} out of {test_samples_size} with loss cost: {res[1]} with accuracy={accuracy}')
-      print( [x for x in list(zip(dp.translate(res[3], 'word'), dp.translate(res[4]), dp.translate(res[5])))] )
+      print(f'testing_step {counterTest} out of {test_samples_size} with loss cost: {res[0]} with accuracy={accuracy}')
+      print( [x for x in list(zip(dp.translate(res[2], 'word'), dp.translate(res[3]), dp.translate(res[4])))] )
 
       counterTest += 1
 
