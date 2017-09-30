@@ -8,8 +8,9 @@ def main():
   print(f'len of dataset={len(ls)}')
   datasetGen = DatasetGen(ls, batchSize)
   for i in range(0,50):
-    d = datasetGen.nextTrainBatch()
-    print([len(x) for x,_ in d])
+    x,y = datasetGen.nextTrainBatch()
+    print(x,y)
+    input()
 
 if __name__ == '__main__':
   main()

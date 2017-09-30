@@ -21,18 +21,24 @@ class DatasetGen():
 
     if i < len(self.train):
       self.trainIndex += 1
-      return self.train[i:i+self.batchSize]
+      train = self.train[i:i+self.batchSize]
+      x = [s for s,_ in  train]
+      y = [d for _,d in  train]
+      return x,y
 
-    return []
+    return [],[]
 
   def nextTestBatch(self):
     i = self.testIndex * self.batchSize
 
     if i < len(self.test):
       self.testIndex += 1
-      return self.test[i:i+self.batchSize]
+      test = self.test[i:i+self.batchSize]
+      x = [s for s,_ in  test]
+      y = [d for _,d in  test]
+      return x,y
 
-    return []
+    return [],[]
 
   def _splitDataset(self):
     shuffle(self.ls)
