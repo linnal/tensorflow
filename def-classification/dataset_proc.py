@@ -17,7 +17,6 @@ class DatasetProc():
 
         _def = int(_def.strip())
         ls.append((self._translateWords(sentence), _def))
-    test = [(s+ self._extraEos(maxSentenceLen - len(s)),d) for (s,d) in ls ]
     return [(s+ self._extraEos(maxSentenceLen - len(s)),d) for (s,d) in ls ]
 
   def _addSentenceToVocab(self, sentence, counter):
