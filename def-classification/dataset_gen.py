@@ -7,7 +7,7 @@ class DatasetGen():
     self.ls = ls
 
     self.initTrainTest()
-    print(len(self.train), len(self.test))
+    print(f'train= {len(self.train)}, test={len(self.test)}')
 
   def initTrainTest(self):
     self.trainIndex = 0

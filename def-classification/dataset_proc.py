@@ -3,6 +3,7 @@ class DatasetProc():
   def __init__(self):
     self.vocab_wordid = dict()
     self.vocab_idword = dict()
+    self.maxSentenceLen= 0
 
   def getData(self):
     ls = []
@@ -17,7 +18,12 @@ class DatasetProc():
 
         _def = int(_def.strip())
         ls.append((self._translateWords(sentence), _def))
+
+    self.maxSentenceLen= maxSentenceLen
     return [(s+ self._extraEos(maxSentenceLen - len(s)),d) for (s,d) in ls ]
+
+  def vocabSize(self):
+    return len(self.vocab_wordid.keys())
 
   def _addSentenceToVocab(self, sentence, counter):
     for word in sentence:
