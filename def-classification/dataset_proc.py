@@ -1,8 +1,8 @@
 class DatasetProc():
 
   def __init__(self):
-    self.vocab_wordid = dict()
-    self.vocab_idword = dict()
+    self.vocab_index = dict()
+    self.vocab_word = dict()
     self.maxSentenceLen= 0
 
   def getData(self):
@@ -23,21 +23,22 @@ class DatasetProc():
     return [(s+ self._extraEos(maxSentenceLen - len(s)),d) for (s,d) in ls ]
 
   def vocabSize(self):
-    return len(self.vocab_wordid.keys())
+    return len(self.vocab_index.keys())
+
+  def eos(self):
+    return self.vocab_index['.']
 
   def _addSentenceToVocab(self, sentence, counter):
     for word in sentence:
-      if word not in self.vocab_wordid:
-        self.vocab_wordid[word] = counter
-        self.vocab_idword[counter] = word
+      if word not in self.vocab_index:
+        self.vocab_index[word] = counter
+        self.vocab_word[counter] = word
         counter += 1
     return counter
 
   def _translateWords(self, sentence):
-    return [self.vocab_wordid[word] for word in sentence ]
+    return [self.vocab_index[word] for word in sentence ]
 
   def _extraEos(self, dim):
-    return [self._eos()] * dim
+    return [self.eos()] * dim
 
-  def _eos(self):
-    return self.vocab_wordid['.']
