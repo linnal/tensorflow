@@ -14,7 +14,7 @@ datasetProc = DatasetProc()
 ls = datasetProc.getData()
 
 vocab_input_size = datasetProc.vocabSize()
-vocab_ouput_size = 2
+vocab_ouput_size = 1
 timestep = datasetProc.maxSentenceLen
 
 print(f'len of dataset={len(ls)}')
@@ -24,8 +24,8 @@ print('='*40)
 
 
 x = tf.placeholder(tf.int64, [batchSize, timestep])
-y = tf.placeholder(tf.int64, [batchSize])
-weight = tf.placeholder(tf.float32, [batchSize, timestep])
+y = tf.placeholder(tf.float32, [batchSize])
+lengths = tf.placeholder(tf.int32, [batchSize])
 embeddings = tf.get_variable("embedding", [vocab_input_size, embDim])
 embedding_layer = tf.nn.embedding_lookup(embeddings, x)
 
@@ -41,20 +41,31 @@ with tf.variable_scope("RNN"):
     outputs.append(cell_output)
 output = tf.stack(axis=1, values=outputs)
 
-output = tf.reshape(output, [-1, hiddenSize])
+# apply slice to ouput
+output = extract_axis(output, lengths - 1)
+
 softmax_w = tf.get_variable("softmax_w", [hiddenSize, vocab_ouput_size], dtype=tf.float32)
 softmax_b = tf.get_variable("softmax_b", [vocab_ouput_size], dtype=tf.float32)
 logits = tf.matmul(output, softmax_w) + softmax_b
 
 predictions = tf.sigmoid(logits)
-loss = tf.metrics.mean_squared_error(
+predictions = tf.reshape(predictions, [-1])
+loss = tf.losses.mean_squared_error(
     y,
     predictions,
-    weights=weight,
-    metrics_collections=None,
-    updates_collections=None,
-    name=None
+    weights=1.0,
+    scope=None,
+    loss_collection=tf.GraphKeys.LOSSES,
+    reduction=tf.losses.Reduction.SUM_BY_NONZERO_WEIGHTS
 )
+
+correct_prediction = tf.equal(y, predictions)
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+optimizer = tf.train.AdamOptimizer().minimize(loss)
+tvars = tf.trainable_variables()
+
+
 
 datasetGen = DatasetGen(ls, batchSize)
 
@@ -63,10 +74,12 @@ with tf.Session() as sess:
 
   for i in range(0,TRAINING_STEPS):
     x_train, y_train = datasetGen.nextTrainBatch()
+    train_lengths =[ getRealLength(ls, datasetProc.eos()) for ls in x_train]
     print(f'xtrain=({len(x_train)},{len(x_train[0])}), ytrain=({len(y_train)})')
-    res = sess.run([embedding_layer, predictions, loss],
-      feed_dict={ x: np.array(x_train), 
-      			y: np.array(y_train),
-      			weight:  createWeightMask(x_train, datasetProc.eos())} )
-    print(res[2])
+    res = sess.run([optimizer, tvars, loss, accuracy],
+      feed_dict={ x: np.array(x_train),
+                  y: np.array(y_train),
+                  lengths: train_lengths
+                  } )
+    print(f'loss={res[2]}, accuracy={res[3]}')
 
