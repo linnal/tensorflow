@@ -73,13 +73,25 @@ with tf.Session() as sess:
   sess.run(tf.global_variables_initializer())
 
   for i in range(0,TRAINING_STEPS):
+    #train
     x_train, y_train = datasetGen.nextTrainBatch()
     train_lengths =[ getRealLength(ls, datasetProc.eos()) for ls in x_train]
-    print(f'xtrain=({len(x_train)},{len(x_train[0])}), ytrain=({len(y_train)})')
     res = sess.run([optimizer, tvars, loss, accuracy],
       feed_dict={ x: np.array(x_train),
                   y: np.array(y_train),
                   lengths: train_lengths
                   } )
-    print(f'loss={res[2]}, accuracy={res[3]}')
+    print(f'train: loss={res[2]}, accuracy={res[3]}')
+
+    if i%10 == 0:
+      #test
+      while datasetGen.hasNextTestBatch():
+        x_test, y_test = datasetGen.nextTestBatch()
+        test_lengths =[ getRealLength(ls, datasetProc.eos()) for ls in x_test]
+        res = sess.run([optimizer, tvars, loss, accuracy],
+          feed_dict={ x: np.array(x_test),
+                      y: np.array(y_test),
+                      lengths: test_lengths
+                      } )
+      print(f'test: loss={res[2]}, accuracy={res[3]}')
 

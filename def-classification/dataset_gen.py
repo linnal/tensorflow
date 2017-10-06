@@ -7,9 +7,10 @@ class DatasetGen():
     self.ls = ls
 
     self.initTrainTest()
-    print(f'train= {len(self.train)}, test={len(self.test)}')
+    print(f'{type(self).__name__}: train= {len(self.train)}, test={len(self.test)}')
 
   def initTrainTest(self):
+    print(f'{type(self).__name__}: shuffle and initTrainTest')
     self.trainIndex = 0
     self.testIndex = 0
     self.train, self.test = self._splitDataset() # 80%,20%
@@ -26,11 +27,12 @@ class DatasetGen():
       y = [d for _,d in  train]
       return x,y
 
-    return [],[]
+    initTrainTest(self)
+    return self.nextTestBatch()
 
   def nextTestBatch(self):
     i = self.testIndex * self.batchSize
-
+    print(f'{type(self).__name__}: nextTestBatch took test[{i}:{i+self.batchSize}]')
     if i < len(self.test):
       self.testIndex += 1
       test = self.test[i:i+self.batchSize]
@@ -38,7 +40,17 @@ class DatasetGen():
       y = [d for _,d in  test]
       return x,y
 
-    return [],[]
+    self.testIndex = 0
+    return self.nextTestBatch()
+
+  def hasNextTestBatch(self):
+    i = self.testIndex * self.batchSize
+    if i < len(self.test):
+      return True
+
+    self.testIndex = 0
+    return False
+
 
   def _splitDataset(self):
     shuffle(self.ls)
@@ -51,7 +63,7 @@ class DatasetGen():
         nodefs.append((sentence, _def))
 
     dim_train_def, dim_train_nodef = int(len(defs)*0.80), int(len(nodefs)*0.80)
-    # dim_test_def, dim_test_nodef = int(len(defs)*0.20), int(len(nodefs)*0.20)
+
     train = defs[:dim_train_def] + nodefs[:dim_train_nodef]
     test = defs[dim_train_def:] + nodefs[dim_train_nodef:]
 
