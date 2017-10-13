@@ -52,7 +52,7 @@ loss = tf.losses.mean_squared_error(
     reduction=tf.losses.Reduction.SUM_BY_NONZERO_WEIGHTS
 )
 
-correct_prediction = tf.equal(y, predictions)
+correct_prediction = tf.equal(y, tf.round(predictions))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 optimizer = tf.train.AdamOptimizer().minimize(loss)
