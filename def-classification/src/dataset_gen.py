@@ -17,27 +17,24 @@ class DatasetGen():
     self.train = self._addExtraData(self.train)
     self.test = self._addExtraData(self.test)
 
+
   def nextTrainBatch(self):
     i = self.trainIndex * self.batchSize
 
     if i < len(self.train):
       self.trainIndex += 1
-      train = self.train[i:i+self.batchSize]
-      x = [s for s,_ in  train]
-      y = [d for _,d in  train]
+      x,y = self._getBatch(self.train, i, i+self.batchSize)
       return x,y
 
-    initTrainTest(self)
+    self.initTrainTest()
     return self.nextTestBatch()
 
   def nextTestBatch(self):
     i = self.testIndex * self.batchSize
-    print(f'{type(self).__name__}: nextTestBatch took test[{i}:{i+self.batchSize}]')
+    # print(f'{type(self).__name__}: nextTestBatch took test[{i}:{i+self.batchSize}]')
     if i < len(self.test):
       self.testIndex += 1
-      test = self.test[i:i+self.batchSize]
-      x = [s for s,_ in  test]
-      y = [d for _,d in  test]
+      x,y = self._getBatch(self.test, i, i+self.batchSize)
       return x,y
 
     self.testIndex = 0
@@ -51,6 +48,12 @@ class DatasetGen():
     self.testIndex = 0
     return False
 
+
+  def _getBatch(self, ls, _from, _to):
+    lsbatch = ls[_from:_to]
+    x = [s for s,_ in  lsbatch]
+    y = [d for _,d in  lsbatch]
+    return x,y
 
   def _splitDataset(self):
     shuffle(self.ls)

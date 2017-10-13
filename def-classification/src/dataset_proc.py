@@ -1,26 +1,23 @@
 class DatasetProc():
 
-  def __init__(self):
+  def __init__(self, filePath):
     self.vocab_index = dict()
     self.vocab_word = dict()
-    self.maxSentenceLen= 0
+    self.filePath = filePath
 
   def getData(self):
     ls = []
-    with open('out', 'r') as f:
+    with open(self.filePath, 'r') as f:
       counter = 0
-      maxSentenceLen = 0
       for line in f:
         _id, _source, _content, _def = line.split('\t')
         sentence = _content.split()
-        maxSentenceLen = max(maxSentenceLen, len(sentence))
         counter = self._addSentenceToVocab(sentence, counter)
 
         _def = int(_def.strip())
         ls.append((self._translateWords(sentence), _def))
 
-    self.maxSentenceLen= maxSentenceLen
-    return [(s+ self._extraEos(maxSentenceLen - len(s)),d) for (s,d) in ls ]
+    return ls
 
   def vocabSize(self):
     return len(self.vocab_index.keys())
@@ -39,6 +36,4 @@ class DatasetProc():
   def _translateWords(self, sentence):
     return [self.vocab_index[word] for word in sentence ]
 
-  def _extraEos(self, dim):
-    return [self.eos()] * dim
 

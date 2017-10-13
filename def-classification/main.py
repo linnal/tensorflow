@@ -1,35 +1,34 @@
-from dataset_gen import DatasetGen
-from dataset_proc import DatasetProc
 import numpy as np
 import tensorflow as tf
-from utils import *
+
 import sys
+sys.path.append('src')
+from dataset_handler import DatasetHandler
+from utils import *
+
 
 batchSize = 50
 embDim = 51
 hiddenSize = 200
-TRAINING_STEPS = 50
+TRAINING_STEPS = 1000
+NUM_LAYERS = int(sys.argv[1])
 
-datasetProc = DatasetProc()
-ls = datasetProc.getData()
+datasetHandler = DatasetHandler(batchSize, "out")
 
-vocab_input_size = datasetProc.vocabSize()
+vocab_input_size = datasetHandler.vocabSize()
 vocab_ouput_size = 1
-timestep = datasetProc.maxSentenceLen
 
-print(f'len of dataset={len(ls)}')
+
 print(f'Size: vocab input = {vocab_input_size}, vocab output={vocab_ouput_size}')
-print(f'timestp= {timestep}')
 print('='*40)
 
 
-x = tf.placeholder(tf.int64, [batchSize, timestep])
+x = tf.placeholder(tf.int64, [batchSize, None])
 y = tf.placeholder(tf.float32, [batchSize])
 lengths = tf.placeholder(tf.int32, [batchSize])
 embeddings = tf.get_variable("embedding", [vocab_input_size, embDim])
 embedding_layer = tf.nn.embedding_lookup(embeddings, x)
 
-NUM_LAYERS = int(sys.argv[1])
 cell = tf.contrib.rnn.MultiRNNCell(cells=[build_inner_cell(hiddenSize) for _ in range(0, NUM_LAYERS)], state_is_tuple=True)
 
 # dynamic rnn
@@ -61,15 +60,14 @@ tvars = tf.trainable_variables()
 
 
 
-datasetGen = DatasetGen(ls, batchSize)
-
 with tf.Session() as sess:
   sess.run(tf.global_variables_initializer())
 
   for i in range(0,TRAINING_STEPS):
+    print(f'\n{i}/{TRAINING_STEPS}')
     #train
-    x_train, y_train = datasetGen.nextTrainBatch()
-    train_lengths =[ getRealLength(ls, datasetProc.eos()) for ls in x_train]
+    x_train, y_train = datasetHandler.nextTrainBatch()
+    train_lengths =[ getRealLength(ls, datasetHandler.eos()) for ls in x_train]
     res = sess.run([optimizer, tvars, loss, accuracy],
       feed_dict={ x: np.array(x_train),
                   y: np.array(y_train),
@@ -79,9 +77,9 @@ with tf.Session() as sess:
 
     if i%10 == 0:
       #test
-      while datasetGen.hasNextTestBatch():
-        x_test, y_test = datasetGen.nextTestBatch()
-        test_lengths =[ getRealLength(ls, datasetProc.eos()) for ls in x_test]
+      while datasetHandler.hasNextTestBatch():
+        x_test, y_test = datasetHandler.nextTestBatch()
+        test_lengths =[ getRealLength(ls, datasetHandler.eos()) for ls in x_test]
         res = sess.run([optimizer, tvars, loss, accuracy],
           feed_dict={ x: np.array(x_test),
                       y: np.array(y_test),
