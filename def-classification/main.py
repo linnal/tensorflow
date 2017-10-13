@@ -32,14 +32,8 @@ embedding_layer = tf.nn.embedding_lookup(embeddings, x)
 NUM_LAYERS = int(sys.argv[1])
 cell = tf.contrib.rnn.MultiRNNCell(cells=[build_inner_cell(hiddenSize) for _ in range(0, NUM_LAYERS)], state_is_tuple=True)
 
-
-outputs = []
-state = cell.zero_state(batchSize, tf.float32)
-with tf.variable_scope("RNN"):
-  for i in range(timestep):
-    (cell_output, state) = cell(embedding_layer[:, i, :], state)
-    outputs.append(cell_output)
-output = tf.stack(axis=1, values=outputs)
+# dynamic rnn
+output, state = tf.nn.dynamic_rnn(cell, embedding_layer, sequence_length=lengths, initial_state=cell.zero_state(batchSize, tf.float32))
 
 # apply slice to ouput
 output = extract_axis(output, lengths - 1)
