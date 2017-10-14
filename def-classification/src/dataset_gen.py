@@ -7,10 +7,12 @@ class DatasetGen():
     self.ls = ls
 
     self.initTrainTest()
-    print(f'{type(self).__name__}: train= {len(self.train)}, test={len(self.test)}')
+    print('{className}: train= {trainLen}, test={testLen}'
+      .format(className= type(self).__name__, trainLen= len(self.train), testLen= len(self.test)))
 
   def initTrainTest(self):
-    print(f'{type(self).__name__}: shuffle and initTrainTest')
+    print('{className}: shuffle and initTrainTest'
+      .format(className= type(self).__name__))
     self.trainIndex = 0
     self.testIndex = 0
     self.train, self.test = self._splitDataset() # 80%,20%
@@ -31,7 +33,6 @@ class DatasetGen():
 
   def nextTestBatch(self):
     i = self.testIndex * self.batchSize
-    # print(f'{type(self).__name__}: nextTestBatch took test[{i}:{i+self.batchSize}]')
     if i < len(self.test):
       self.testIndex += 1
       x,y = self._getBatch(self.test, i, i+self.batchSize)

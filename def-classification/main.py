@@ -19,7 +19,8 @@ vocab_input_size = datasetHandler.vocabSize()
 vocab_ouput_size = 1
 
 
-print(f'Size: vocab input = {vocab_input_size}, vocab output={vocab_ouput_size}')
+print('Size: vocab input = {vocab_input_size}, vocab output={vocab_ouput_size}'
+      .format(vocab_input_size = vocab_input_size, vocab_ouput_size = vocab_ouput_size))
 print('='*40)
 
 
@@ -97,7 +98,8 @@ with tf.Session() as sess:
 
   while _start < TRAINING_STEPS:
     _start += 1
-    print(f'\n{_start}/{TRAINING_STEPS}')
+    # print('\n{start}/{training_steps}'
+    #       .format(start=_start, training_steps= TRAINING_STEPS))
     summary = train()
     train_writer.add_summary(summary, _start)
 
